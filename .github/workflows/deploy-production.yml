@@ -1,0 +1,25 @@
+diff --git a/.github/workflows/deploy-production.yml b/.github/workflows/deploy-production.yml
+new file mode 100644
+index 0000000000000000000000000000000000000000..34f9f197de244157ccee3b2eb1da5aea2761023b
+--- /dev/null
++++ b/.github/workflows/deploy-production.yml
+@@ -0,0 +1,19 @@
++name: Deploy Production
++
++on:
++  push:
++    tags:
++      - "v*"
++
++jobs:
++  deploy:
++    runs-on: ubuntu-latest
++    steps:
++      - name: Trigger Render deploy
++        env:
++          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK }}
++        run: |
++          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
++            echo "Missing RENDER_PRODUCTION_DEPLOY_HOOK secret" && exit 1
++          fi
++          curl -X POST "$RENDER_DEPLOY_HOOK"
