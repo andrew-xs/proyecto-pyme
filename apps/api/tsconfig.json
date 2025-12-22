@@ -1,0 +1,24 @@
+diff --git a/apps/api/tsconfig.json b/apps/api/tsconfig.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..7172becde3adcdffcb8779f00ed5b8fc8bad1c3e
+--- /dev/null
++++ b/apps/api/tsconfig.json
+@@ -0,0 +1,18 @@
++{
++  "compilerOptions": {
++    "module": "CommonJS",
++    "target": "ES2021",
++    "strict": true,
++    "esModuleInterop": true,
++    "moduleResolution": "Node",
++    "resolveJsonModule": true,
++    "emitDecoratorMetadata": true,
++    "experimentalDecorators": true,
++    "sourceMap": true,
++    "outDir": "dist",
++    "rootDir": "src",
++    "skipLibCheck": true,
++    "types": ["node", "jest"]
++  },
++  "include": ["src/**/*.ts"]
++}

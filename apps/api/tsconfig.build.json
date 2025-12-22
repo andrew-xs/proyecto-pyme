@@ -1,0 +1,13 @@
+diff --git a/apps/api/tsconfig.build.json b/apps/api/tsconfig.build.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..19283b512649d5e53f37f871585ffb0b050a09dd
+--- /dev/null
++++ b/apps/api/tsconfig.build.json
+@@ -0,0 +1,7 @@
++{
++  "extends": "./tsconfig.json",
++  "compilerOptions": {
++    "sourceMap": false,
++    "declaration": false
++  }
++}
