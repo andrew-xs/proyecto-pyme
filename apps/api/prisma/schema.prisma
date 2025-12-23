@@ -1,0 +1,226 @@
+diff --git a/apps/api/prisma/schema.prisma b/apps/api/prisma/schema.prisma
+new file mode 100644
+index 0000000000000000000000000000000000000000..ac7f4922c1b5f7147eb7bc0f19f8e4ca3591c5df
+--- /dev/null
++++ b/apps/api/prisma/schema.prisma
+@@ -0,0 +1,220 @@
++generator client {
++  provider = "prisma-client-js"
++}
++
++datasource db {
++  provider = "postgresql"
++  url      = env("DATABASE_URL")
++}
++
++enum Role {
++  OWNER
++  MANAGER
++  MEMBER
++}
++
++enum Profile {
++  P1
++  P2
++  P3
++  P4
++}
++
++enum Module {
++  BASE
++  DOM
++  SANITARIO
++  TRANSPORTE
++}
++
++enum RequirementStatus {
++  NOT_STARTED
++  IN_PROGRESS
++  DONE
++  EXPIRED
++  NOT_APPLICABLE
++}
++
++model User {
++  id           String          @id @default(uuid())
++  email        String          @unique
++  passwordHash String
++  name         String
++  createdAt    DateTime        @default(now())
++  memberships  CompanyMember[]
++  auditEvents  AuditEvent[]
++
++  @@map("users")
++}
++
++model Company {
++  id          String          @id @default(uuid())
++  name        String
++  rut         String?
++  createdAt   DateTime        @default(now())
++  members     CompanyMember[]
++  locals      Local[]
++  auditEvents AuditEvent[]
++
++  @@map("companies")
++}
++
++model CompanyMember {
++  id        String   @id @default(uuid())
++  companyId String
++  userId    String
++  role      Role
++  createdAt DateTime @default(now())
++
++  company Company @relation(fields: [companyId], references: [id])
++  user    User    @relation(fields: [userId], references: [id])
++
++  @@unique([companyId, userId])
++  @@map("company_members")
++}
++
++model Comuna {
++  id        Int      @id @default(autoincrement())
++  name      String   @unique
++  region    String   @default("Biobío")
++  createdAt DateTime @default(now())
++
++  @@map("comunas")
++}
++
++model Local {
++  id               String   @id @default(uuid())
++  companyId        String
++  comunaId         Int
++  name             String
++  address          String
++  profile          Profile
++  modules          Module[]
++  onboardingAnswer Json
++  createdAt        DateTime @default(now())
++
++  company               Company                @relation(fields: [companyId], references: [id])
++  comuna                Comuna                 @relation(fields: [comunaId], references: [id])
++  requirementInstances  RequirementInstance[]
++  documents             Document[]
++  exports               Export[]
++
++  @@index([companyId])
++  @@map("locals")
++}
++
++model AuditEvent {
++  id         String   @id @default(uuid())
++  companyId  String
++  userId     String?
++  localId    String?
++  actionType String
++  entityType String
++  entityId   String?
++  metadata   Json?
++  createdAt  DateTime @default(now())
++
++  company Company @relation(fields: [companyId], references: [id])
++  user    User?   @relation(fields: [userId], references: [id])
++  local   Local?  @relation(fields: [localId], references: [id])
++
++  @@index([companyId, createdAt])
++  @@index([localId, createdAt])
++  @@map("audit_events")
++}
++
++model RequirementTemplate {
++  id                 String   @id @default(uuid())
++  code               String   @unique
++  title              String
++  description        String
++  module             Module
++  applicableProfiles Profile[]
++  reminderDays       Int[]    @default([30, 7, 1, 0])
++  createdAt          DateTime @default(now())
++
++  instances RequirementInstance[]
++
++  @@map("requirement_templates")
++}
++
++model RequirementInstance {
++  id            String            @id @default(uuid())
++  localId       String
++  templateId    String
++  status        RequirementStatus @default(NOT_STARTED)
++  dueDate       DateTime?
++  assigneeId    String?
++  notes         String?
++  createdAt     DateTime          @default(now())
++  completedAt   DateTime?
++
++  local       Local               @relation(fields: [localId], references: [id])
++  template    RequirementTemplate @relation(fields: [templateId], references: [id])
++  assignee    User?               @relation(fields: [assigneeId], references: [id])
++  documents   RequirementDocument[]
++  notifications NotificationLog[]
++
++  @@index([localId, status])
++  @@index([localId, dueDate])
++  @@map("requirement_instances")
++}
++
++model Document {
++  id          String   @id @default(uuid())
++  localId     String
++  uploadedBy  String?
++  type        String
++  fileKey     String
++  fileName    String
++  mimeType    String
++  sizeBytes   Int
++  issueDate   DateTime?
++  expiryDate  DateTime?
++  isCurrent   Boolean  @default(true)
++  createdAt   DateTime @default(now())
++
++  local     Local                @relation(fields: [localId], references: [id])
++  uploader  User?                @relation(fields: [uploadedBy], references: [id])
++  requirements RequirementDocument[]
++
++  @@index([localId, type])
++  @@index([localId, expiryDate])
++  @@map("documents")
++}
++
++model RequirementDocument {
++  requirementInstanceId String
++  documentId            String
++
++  requirement RequirementInstance @relation(fields: [requirementInstanceId], references: [id])
++  document    Document            @relation(fields: [documentId], references: [id])
++
++  @@id([requirementInstanceId, documentId])
++  @@map("requirement_documents")
++}
++
++model Export {
++  id        String   @id @default(uuid())
++  localId   String
++  type      String
++  fileKey   String
++  createdAt DateTime @default(now())
++
++  local Local @relation(fields: [localId], references: [id])
++
++  @@map("exports")
++}
++
++model NotificationLog {
++  id                     String   @id @default(uuid())
++  requirementInstanceId  String
++  daysBefore             Int
++  targetDate             DateTime
++  sentAt                 DateTime @default(now())
++
++  requirement RequirementInstance @relation(fields: [requirementInstanceId], references: [id])
++
++  @@unique([requirementInstanceId, daysBefore, targetDate])
++  @@map("notification_log")
++}
